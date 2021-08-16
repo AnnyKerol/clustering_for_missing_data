@@ -12,7 +12,7 @@ Example with the iris dataset with 5% missings
    - iris.par: is the simulation configuration file
    - iris.sig: is a file with sigma values
    - idx-iris5.txt: is a file to store the values of the CR, F-Measure and OERC indexes of each repetition.
-2. The iris.par file must have the following structure
+2. The iris.par file must have the following structure <br>
    **150 5 3 2.0 300 1e-10 100**
    - 150: is the number of observations
    - 5: is the number of variables
