@@ -1,3 +1,12 @@
+/*#################################################################
+
+VKFCM-K-LP -  Optimal Completion Strategy (OCS)
+Version: 0.1
+authors: Anny K G Rodrigues; Raydonal Ospina; Marcelo Ferreira
+
+#################################################################*/
+
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
@@ -111,7 +120,7 @@ int main(int argc, char *argv[])
 	   for(j=0; j<data->n_ind; j++){
 			  for(i=0; i<(data->n_var-1); i++){
 				  if(data->x[j][i+1]==9999){
-					  Num_Miss=Num_Miss+1; //contando o número de missing		 
+					  Num_Miss=Num_Miss+1; 	 
 		  }
 		 }  
 	 }
@@ -119,7 +128,7 @@ int main(int argc, char *argv[])
 	 //printf("passei aqui numero de missing %d ", Num_Miss);
 	 
 	   int ii, b,**matriz, *valoresIni;
-         matriz = (int **)malloc(Num_Miss*sizeof(int *)); // alocando memória para uma matriz de poscoes
+         matriz = (int **)malloc(Num_Miss*sizeof(int *)); 
          for(ii=0;ii<Num_Miss;ii++){
               matriz[ii]=(int*)malloc(2*sizeof(int));
            }   
@@ -400,7 +409,7 @@ double ** Xm_inicial(int n, int p, double **d){
 	   for(j=0; j<n; j++){
 			  for(i=0; i<(p-1); i++){
 				  if(d[j][i+1]==9999){
-					  Num_Miss=Num_Miss+1; //contando o número de missing		 
+					  Num_Miss=Num_Miss+1; 	 
 		  }
 		 }  
 	 }
@@ -410,7 +419,7 @@ double ** Xm_inicial(int n, int p, double **d){
 	 // printf("passei aqui numero de missing %d ", Num_Miss);
 	 
 	   int ii, b,**matriz, *valoresIni;
-         matriz = (int **)malloc(Num_Miss*sizeof(int *)); // alocando memória para uma matriz de poscoes
+         matriz = (int **)malloc(Num_Miss*sizeof(int *)); 
         for(ii=0;ii<Num_Miss;ii++){
               matriz[ii]=(int*)malloc(2*sizeof(int));
        }   
