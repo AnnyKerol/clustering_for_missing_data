@@ -1,9 +1,18 @@
+/*#################################################################
+
+VKFCM-K-LP - Whole data strategy - (WDS)
+Version: 0.1
+authors: Anny K G Rodrigues; Raydonal Ospina; Marcelo Ferreira
+
+#################################################################*/
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
 #include <string.h>
 #include <time.h>
 
+//file pointers
 FILE *e;
 FILE *s;
 FILE *par;
@@ -11,57 +20,59 @@ FILE *sig;
 FILE *idx;
 FILE *idx2;
 
-struct partition
+struct partition //structure for the partition
 {
-    int n_clust;
-    int *hard;  // para os dados completos sem missings
-    int *hard2; //para os dados com apenas missings
-    int *hard3;
-    struct cluster *p;
+    int n_clust; //cluster numbers
+    int *hard;  //clusters for complete data
+    int *hard2; 
+    int *hard3; // clusters for missing data
+    struct cluster *p; //pointer to cluster type structure
     double **pert;
 };
-struct cluster
+struct cluster //Structure for the cluster
 {
-    int n_ind;
-    double *protot;
-    double *weight;
+    int n_ind; //index number
+    double *protot; //pointer that will store the address of the prototypes
+    double *weight; // pointer for weights
 };
-struct dados
+struct dados //Structure for the data
 {
     int *hard;
-    int *hard2; //para os dados com apenas missings
-    int *hard3; //dados total
+    int *hard2; 
+    int *hard3; 
     int n_ind;
-    int n_var;
+    int n_var; //number of variables
     double **x;
-   // double **y; // matriz de dados sem missings
-   // double **y_Miss; // matriz de missings
+   // double **y; // matrix with no missing data
+   // double **y_Miss; // matrix of missing
 };
 
 double **m2d_alloc(int n, int p, double **d);
 double **aloca_mem_dados(int n, int p, double **d);
-void leitura_dados(int n, int p, double **d);
-void impressao_dados(int n, int p, double **d);
-double **aloca_mem_pert(int n, int p, double **d);
-void best_prototype(struct partition *p, struct dados *d, double m, double *sigma);
-void best_fuzzy_partition(struct partition *p, struct dados *d, double m, double *sigma);
-void iniciar(struct partition *p, struct dados *d, double m, double *sigma);
+void leitura_dados(int n, int p, double **d); // function to read the data
+void impressao_dados(int n, int p, double **d); //data printing function
+double **aloca_mem_pert(int n, int p, double **d); // function for memory allocation of the membership matrix
+void best_prototype(struct partition *p, struct dados *d, double m, double *sigma); // best prototype
+void best_fuzzy_partition(struct partition *p, struct dados *d, double m, double *sigma); // best partition
+void iniciar(struct partition *p, struct dados *d, double m, double *sigma); //function for initial partition
 void inicial_best_fuzzy_partition(struct partition *p, struct dados *d, double m, int *sel, double *sigma);
 void inicial_prototype(struct partition *p, struct dados *d, int *sel);
-double criterio(struct partition *p, struct dados *d, double m, double *sigma);
+double criterio(struct partition *p, struct dados *d, double m, double *sigma); //calculates the J criterion
 void particao_hard(struct partition *p, struct dados *d);
 void inicial_best_weight(struct partition *p, struct dados *d);
 void best_weight(struct partition *p, struct dados *d, double m, double *sigma);
-double cr_index(struct partition *pp, struct dados *dd);
-void conf_mat(struct partition *p, struct dados *d, double **confmat);
-double misclassif_rate(struct partition *p, struct dados *d, double **confmat);
+
+double cr_index(struct partition *pp, struct dados *dd); 
+void conf_mat(struct partition *p, struct dados *d, double **confmat); // confusion matrix
+double misclassif_rate(struct partition *p, struct dados *d, double **confmat); 
 double fmeasure(struct partition *p, struct dados *d, double **confmat);
-double ** X_Completo(int n, int p, double **d);
-double ** X_Missings(int n, int p, double **d);
+
+double ** X_Completo(int n, int p, double **d); // complete Data 
+double ** X_Missings(int n, int p, double **d); //data with missings
 int verifica(struct dados *d, int k);
-void distancia_parcial(struct partition *p,struct dados *d, double *sigma);
+void distancia_parcial(struct partition *p,struct dados *d, double *sigma); // Partial Distance
 int noMissing(double **d, int a,  int k);
-void remendo(struct dados *d, struct partition *p, int **matriz, struct dados *f, int Num_Miss);
+void part_2(struct dados *d, struct partition *p, int **matriz, struct dados *f, int Num_Miss);
 
 int main(int argc, char *argv[])
 {
@@ -97,7 +108,7 @@ int main(int argc, char *argv[])
     sigm = argv[4];
     idxx = argv[5];
       
-
+ // input parameters
     e=fopen(entrada,"rt");
     s=fopen(saida,"wt");
     par=fopen(param,"rt");
@@ -116,21 +127,19 @@ int main(int argc, char *argv[])
     printf("Leitura dos parametros\n");
     fscanf(par, "%d %d %d %lf %d %lf %d", &data->n_ind, &data->n_var, &particao->n_clust, &m, &tmax, &eps, &nrep);
     printf("Alocacao memoria dados 2\n");
-    data->x=aloca_mem_dados(data->n_ind,data->n_var,data->x);
+    data->x=aloca_mem_dados(data->n_ind,data->n_var,data->x); //allocating memory to the dataset
     data->hard3=(int *)malloc(data->n_ind*sizeof(int));
     printf("leitura dados\n");
     leitura_dados(data->n_ind,data->n_var,data->x);
 
 
-
-
-  //Contado o número de missings 
+  //counting the number of missings
     int Num_Miss=0;
 	   for(j=0; j<data->n_ind; j++){
 			  for(i=0; i<(data->n_var-1); i++){
 				  if(data->x[j][i+1]==9999){
 					   i=data->n_var+1;
-					  Num_Miss=Num_Miss+1; //contando o número de missing	
+					  Num_Miss=Num_Miss+1; 
 					 
 		  }
 		 }  
@@ -139,24 +148,24 @@ int main(int argc, char *argv[])
  printf("Numero de missings %d\n", Num_Miss); 
 
 	   int ii, b,**matriz;
-         matriz = (int **)malloc(Num_Miss*sizeof(int *)); // alocando memória para uma matriz de poscoes
+         matriz = (int **)malloc(Num_Miss*sizeof(int *)); //allocating memory for an array of locations
          for(ii=0;ii<Num_Miss;ii++){
               matriz[ii]=(int*)malloc(2*sizeof(int));
            }   
            
            
-// printf("alocouuuuuuu  %d  %d\n", i,j); 
+// printf("Memoria alocada %d  %d\n", i,j); 
 	     
 	    int aux=0;   
 	      for(j=0; j<data->n_ind; j++){
 			  for(i=0; i<(data->n_var-1); i++){
 				   if(data->x[j][i+1]==9999){
-					        i=data->n_var+1; //gambiarra
+					        i=data->n_var+1; 
 					   matriz[aux][0]=j;
-					  // printf("Linhas dos missingsssss %d\n", matriz[aux][0]);
+					  // printf("Linhas dos missings %d\n", matriz[aux][0]);
 					   aux++;
 					   //j++;
-					  // matriz[i][1]=i;//salva desconsiderando a coluna das classes
+					  // matriz[i][1]=i;//save the position of missings without the class column
 					    
 				  } 
 			  }
@@ -170,10 +179,8 @@ data_Comp->n_var = data->n_var;
 
 data_Comp->hard=(int *)malloc(data_Comp->n_ind*sizeof(int));
 
-printf("Passei aquii3 %d  %d\n", data_Comp->n_ind, data_Comp->n_var );
-data_Comp->x =aloca_mem_dados(data_Comp->n_ind,data_Comp->n_var,data_Comp->x); //alocando memoria pro banco dos dados completos
-
-
+printf("data complete %d  %d\n", data_Comp->n_ind, data_Comp->n_var );
+data_Comp->x =aloca_mem_dados(data_Comp->n_ind,data_Comp->n_var,data_Comp->x); //allocating memory to the complete database
 data_Comp->x = X_Completo(data->n_ind,data->n_var,data->x); 
 
 
@@ -201,7 +208,7 @@ data_Miss->x = X_Missings(data->n_ind,data->n_var, data->x);
    
     particao->hard=(int *)malloc(data_Comp->n_ind*sizeof(int)); //banco completo
     particao->hard2=(int *)malloc(data_Miss->n_ind*sizeof(int)); //banco só com missings
-     particao->hard3=(int *)malloc(data->n_ind*sizeof(int)); // banco original
+    particao->hard3=(int *)malloc(data->n_ind*sizeof(int)); // banco original
     
     printf("Alocacao memoria particao 4\n");
     for(i=0;i<particao->n_clust;i++)
@@ -253,7 +260,7 @@ data_Miss->x = X_Missings(data->n_ind,data->n_var, data->x);
             }
 //            printf("Etapa 1: determinacao dos prototipos\n");
             best_prototype(particao,data_Comp,m,sigma);
-//            printf("Etapa 2: determinacao da particao fuzzy\n");
+//          printf("Etapa 2: determinacao da particao fuzzy\n");
             best_weight(particao,data_Comp,m,sigma);
             best_fuzzy_partition(particao,data_Comp,m,sigma);
             best_atual = criterio(particao,data_Comp,m,sigma);
@@ -262,9 +269,10 @@ data_Miss->x = X_Missings(data->n_ind,data->n_var, data->x);
         }
         while((fabs(best_ant-best_atual) > eps) && ( t < tmax));
         printf("\ni=%d J=%f\n",i,best_atual);
+        
         particao_hard(particao,data_Comp);
         distancia_parcial(particao,data_Miss,sigma);
-        remendo(data,particao,matriz, data_Comp, Num_Miss);
+        part_2(data,particao,matriz, data_Comp, Num_Miss);
         
 	 
 	 
@@ -447,9 +455,7 @@ int verifica(struct dados *d, int k){
 	}
 
 }
-double ** X_Completo(int n, int p, double **d){
-	// printf(" Entrei aqui heimmmmmm ");
-	 
+double ** X_Completo(int n, int p, double **d){ 
 	  int i,j, k;
 	   int Num_Miss=0;
 	    for(j=0; j<n; j++){
@@ -457,17 +463,17 @@ double ** X_Completo(int n, int p, double **d){
 			for(i=0; i<(p-1); i++){
 				  if(d[j][i+1]==9999){
 					  i=p+1;
-					 Num_Miss=Num_Miss+1; //contando o número de missing		 
+					 Num_Miss=Num_Miss+1; 	 
 		  }
 		 }  
 	 }
 	 
 	 
 	 
-	 // printf("passei aqui numero de missing %d ", Num_Miss);
+	 // printf("numero de missing %d ", Num_Miss);
 	 
-	   int ii, b,**matriz;
-         matriz = (int **)malloc(Num_Miss*sizeof(int *)); // alocando memória para uma matriz de poscoes
+	 int ii, b,**matriz;
+         matriz = (int **)malloc(Num_Miss*sizeof(int *)); //allocating memory for an array of locations
          for(ii=0;ii<Num_Miss;ii++){
               matriz[ii]=(int*)malloc(2*sizeof(int));
            } 
@@ -476,12 +482,10 @@ double ** X_Completo(int n, int p, double **d){
 	      for(j=0; j<n; j++){
 			  for(i=0; i<(p-1); i++){
 				   if(d[j][i+1]==9999){
-					        i=p+1; //gambiarra
+					        i=p+1; 
 					   matriz[aux][0]=j;
 					   aux++;
-					   //j++;
-					  // matriz[i][1]=i;//salva desconsiderando a coluna das classes
-					  //  printf("Linhas dos missingsssss %d\n", matriz[i][0]);
+  
 				  } 
 			  }
 	     } 
@@ -541,8 +545,6 @@ double ** X_Completo(int n, int p, double **d){
 	//for(lin=0; lin<N; lin++){
 	  // for(col2=0; col2<p; col2++){
 		
-//	printf(" Bancoooo Novo %d %f\n ", lin, y[lin][col2]);
-		
 	//}
 	//}	 
 return y;
@@ -566,10 +568,10 @@ double ** X_Missings(int n, int p, double **d){
 	 
 	 
 	 
-	 // printf("passei aqui numero de missing %d ", Num_Miss);
+	 // printf("numero de missing %d ", Num_Miss);
 	 
 	   int ii, b,**matriz;
-         matriz = (int **)malloc(Num_Miss*sizeof(int *)); // alocando memória para uma matriz de poscoes
+         matriz = (int **)malloc(Num_Miss*sizeof(int *)); 
          for(ii=0;ii<Num_Miss;ii++){
               matriz[ii]=(int*)malloc(2*sizeof(int));
            } 
@@ -581,9 +583,7 @@ double ** X_Missings(int n, int p, double **d){
 					        i=p+1; //gambiarra
 					   matriz[aux][0]=j;
 					   aux++;
-					   //j++;
-					  // matriz[i][1]=i;//salva desconsiderando a coluna das classes
-					  //  printf("Linhas dos missingsssss %d\n", matriz[i][0]);
+					   
 				  } 
 			  }
 	     } 
@@ -641,7 +641,7 @@ double ** X_Missings(int n, int p, double **d){
 	//for(lin=0; lin<N; lin++){
 	 //  for(col2=0; col2<p; col2++){
 		
-	//printf(" Bancoooo Novo %d %d %f\n ", lin, col2, y[lin][col2]);
+
 		
 	//}
 //	}
@@ -651,6 +651,7 @@ return y;
 free(matriz);
 free(y);
 }
+
 
 void iniciar(struct partition *p, struct dados *d, double m, double *sigma)
 {
@@ -895,7 +896,7 @@ void distancia_parcial(struct partition *p, struct dados *d, double *sigma)
 {
 
     int i,j,k;
-     int  mindist;
+    int  mindist;
     double s;
     int I, cont=0;
     double aux=9999;
@@ -904,10 +905,10 @@ void distancia_parcial(struct partition *p, struct dados *d, double *sigma)
         for(i=0;i<d->n_ind;i++)
         {
 			aux=9999;
-            for(k=0;k<p->n_clust;k++) //mexi aqui troquei com o for do i a ordem
+            for(k=0;k<p->n_clust;k++) 
 			{
 			
-				s=0.0; //mexi aqui
+				s=0.0; 
            
             for(j=0;j<(d->n_var-1);j++)
             {
@@ -918,14 +919,14 @@ void distancia_parcial(struct partition *p, struct dados *d, double *sigma)
 					    I=1;
                         cont=noMissing(d->x,d->n_var,i);
                         s = s + ((d->n_var-1)/cont)*(p->p[k].weight[j] * 2.0 * (1.0 - exp(-0.5* (d->x[i][j+1] - p->p[k].protot[j]) * (d->x[i][j+1] - p->p[k].protot[j])/sigma[j])))*I;
-			           // printf(" Cluster === %d centros ===  %f  pesos=== %f  matriz de dadoss==== %f\n ", k, p->p[k].protot[j], p->p[k].weight[j], d->x[i][j+1]);
+			           // printf(" Cluster === %d centros ===  %f  pesos=== %f  matriz de dados==== %f\n ", k, p->p[k].protot[j], p->p[k].weight[j], d->x[i][j+1]);
 			              
 			          }	           
                      
             }
             
              
-         //    printf( "linhaa === %d  Cluster === %d  distanciaaa em cada cluster  ===== %f\n ",i,k,s);
+         //printf( "row === %d  Cluster === %d  distance in each cluster  ===== %f\n ",i,k,s);
            //  printf(" \n ");
 
        
@@ -938,10 +939,10 @@ void distancia_parcial(struct partition *p, struct dados *d, double *sigma)
 			 }
 	
 			
-       } //mexi aqui
-      //k++; //mexi aqui 	
+       } 
+      	
           p->hard2[i]=grupo+1; 
-       //  printf("i === %d menor grupo  ===== %d\n ", i, p->hard2[i]); //mexi aqui
+       //  printf("i === %d menor grupo  ===== %d\n ", i, p->hard2[i]); 
 
     }
     
@@ -988,15 +989,11 @@ void particao_hard(struct partition *p, struct dados *d)
     }*/
 }
 
-void remendo(struct dados *d, struct partition *p, int **matriz, struct dados *f, int Num_Miss){
+void part_2(struct dados *d, struct partition *p, int **matriz, struct dados *f, int Num_Miss){
 	
-//	printf("entrei aquii\n ");
+
 	int i,aux,j, aux2, aux3;
-//	int auaa;
-//	for(auaa=0; auaa<f->n_ind; auaa++){
-	//printf(" i === %d printte for you  HARD ==== %d\n",auaa, p->hard[auaa]); //problema aqui
-	
-//}
+
 
 //	printf("%d\n",Num_Miss);
 
@@ -1009,24 +1006,21 @@ void remendo(struct dados *d, struct partition *p, int **matriz, struct dados *f
 					
 			p->hard3[i]=p->hard2[aux];
 					
-			//printf(" linha === %d aux === %d hard2 (apenas Missings) ==== %d\n ", i, aux, p->hard3[i]);
+			//printf(" linha === %d aux === %d hard2 (just Missings) ==== %d\n ", i, aux, p->hard3[i]);
 			aux++;
 
 		}else{
 				
 			
 			p->hard3[i]=p->hard[aux3];
-			//printf(" linha == %d aux3 == %d hard (COMLPETOS) == %d\n ", i, aux3, p->hard3[i]);
+			//printf(" linha == %d aux3 == %d hard (complete) == %d\n ", i, aux3, p->hard3[i]);
 			aux3++;
 				
 			}
-		
-		
+
 		//printf(" i== %d hard3 (Todos) === %d\n", i, p->hard3[i]);
 		d->hard3[i]=d->x[i][0];
 		}
-
-//	return p->hard3;
 }
 
 
@@ -1170,5 +1164,4 @@ int noMissing(double **d, int a,  int k){
 		}
 	return cont;
 	}
-
 
